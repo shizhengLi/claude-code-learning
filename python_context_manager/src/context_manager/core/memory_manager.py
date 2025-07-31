@@ -218,7 +218,7 @@ class MemoryManager:
     
     def _fuzzy_match(self, text: str, pattern: str) -> float:
         """
-        Simple fuzzy string matching based on character overlap.
+        Simple fuzzy string matching based on character overlap and sequence.
         
         Args:
             text: Text to search in
@@ -230,16 +230,28 @@ class MemoryManager:
         if not pattern or not text:
             return 0.0
         
-        # Find all substrings of pattern in text
-        pattern_chars = set(pattern.lower())
-        text_chars = set(text.lower())
+        text_lower = text.lower()
+        pattern_lower = pattern.lower()
         
         # Character overlap ratio
+        pattern_chars = set(pattern_lower)
+        text_chars = set(text_lower)
         overlap = len(pattern_chars.intersection(text_chars))
-        return overlap / len(pattern_chars) if pattern_chars else 0.0
+        char_score = overlap / len(pattern_chars) if pattern_chars else 0.0
+        
+        # Sequence matching (bonus for consecutive characters)
+        sequence_score = 0.0
+        if len(pattern_lower) > 1:
+            pattern_parts = pattern_lower.split()
+            for part in pattern_parts:
+                if part in text_lower:
+                    sequence_score += len(part) / len(pattern_lower)
+        
+        # Combined score
+        return (char_score * 0.7 + sequence_score * 0.3)
     
     def semantic_search(self, query: str, memory_type: Optional[MemoryType] = None,
-                       limit: int = 10) -> List[Memory]:
+                       limit: int = 10, similarity_threshold: float = 0.1) -> List[Memory]:
         """
         Perform semantic search based on concept similarity.
         
@@ -247,22 +259,29 @@ class MemoryManager:
             query: Search query
             memory_type: Type of memory to search
             limit: Maximum number of results
+            similarity_threshold: Minimum similarity score threshold
             
         Returns:
             List of semantically similar memories
         """
         try:
+            if not query or not query.strip():
+                return []
+                
             memories = self.get_memories(memory_type=memory_type)
             
             # Extract key concepts from query
             query_concepts = self._extract_concepts(query)
+            
+            if not query_concepts:
+                return []
             
             # Score memories based on concept similarity
             scored_memories = []
             for memory in memories:
                 memory_concepts = self._extract_concepts(memory.content)
                 similarity = self._calculate_concept_similarity(query_concepts, memory_concepts)
-                if similarity > 0:
+                if similarity >= similarity_threshold:
                     scored_memories.append((memory, similarity))
             
             # Sort by semantic similarity
@@ -298,6 +317,10 @@ class MemoryManager:
         for word in words:
             if len(word) > 2 and word not in stop_words:
                 concepts.add(word)
+        
+        # Handle abbreviations like "AI"
+        if "ai" in text.lower():
+            concepts.add("ai")
         
         return concepts
     
