@@ -338,7 +338,7 @@ class TestFormattingUtilities:
         assert result.endswith("...")
         
         # Custom suffix
-        result = truncate_string(text, 20, suffix "***")
+        result = truncate_string(text, 20, "***")
         assert len(result) == 20
         assert result.endswith("***")
 

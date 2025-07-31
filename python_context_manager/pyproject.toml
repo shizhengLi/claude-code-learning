@@ -108,17 +108,13 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=context_manager",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "performance: marks tests as performance tests",
+    "asyncio: asyncio tests",
 ]
-asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["src"]
