@@ -167,7 +167,11 @@ class ConcurrencyController:
         self.execution_times = deque(maxlen=1000)
         
         # Event loop management
-        self.event_loop = asyncio.get_event_loop()
+        try:
+            self.event_loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # No event loop available yet, will be set later
+            self.event_loop = None
         self.shutdown_event = asyncio.Event()
         
         # Background tasks
@@ -181,6 +185,10 @@ class ConcurrencyController:
         if self._scheduler_task and not self._scheduler_task.done():
             logger.warning("Concurrency controller already started")
             return
+        
+        # Set event loop if not already set
+        if self.event_loop is None:
+            self.event_loop = asyncio.get_event_loop()
         
         # Start background tasks
         self._scheduler_task = asyncio.create_task(self._scheduler_loop())
@@ -300,8 +308,8 @@ class ConcurrencyController:
             Task result
         """
         task_id = await self.submit_task(
-            name=name,
-            func=func,
+            name,
+            func,
             *args,
             priority=priority,
             timeout=timeout,
