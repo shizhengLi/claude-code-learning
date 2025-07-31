@@ -1,13 +1,14 @@
 """Storage and caching components."""
 
-from .storage_base import StorageLayer
+from .storage_base import StorageLayer, MemoryLayer
 from .cache_layer import CacheLayer
-from .memory_layer import MemoryLayer
 from .disk_layer import DiskLayer
+from .hierarchical_manager import StorageManager
 
 __all__ = [
     "StorageLayer",
-    "CacheLayer",
     "MemoryLayer",
+    "CacheLayer",
     "DiskLayer",
+    "StorageManager",
 ]
