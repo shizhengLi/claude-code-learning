@@ -88,7 +88,8 @@ class ToolManager:
             name="echo",
             description="Echo back the input parameters",
             category=ToolCategory.UTILITY,
-            timeout=5.0
+            timeout=5.0,
+            tags=["utility", "echo"]
         )
         async def echo_tool(parameters: Dict[str, Any]) -> Dict[str, Any]:
             """Echo tool for testing."""
@@ -101,7 +102,8 @@ class ToolManager:
             name="get_system_info",
             description="Get system information",
             category=ToolCategory.SYSTEM,
-            timeout=10.0
+            timeout=10.0,
+            tags=["system", "info"]
         )
         async def get_system_info_tool(parameters: Dict[str, Any]) -> Dict[str, Any]:
             """Get system information."""
@@ -125,7 +127,8 @@ class ToolManager:
             name="calculate",
             description="Perform mathematical calculations",
             category=ToolCategory.UTILITY,
-            timeout=5.0
+            timeout=5.0,
+            tags=["utility", "math", "calculation"]
         )
         async def calculate_tool(parameters: Dict[str, Any]) -> Dict[str, Any]:
             """Calculate mathematical expressions."""
@@ -159,7 +162,8 @@ class ToolManager:
             name="format_text",
             description="Format and manipulate text",
             category=ToolCategory.UTILITY,
-            timeout=5.0
+            timeout=5.0,
+            tags=["utility", "text", "formatting"]
         )
         async def format_text_tool(parameters: Dict[str, Any]) -> Dict[str, Any]:
             """Format text with various options."""

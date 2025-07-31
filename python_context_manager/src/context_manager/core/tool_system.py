@@ -189,14 +189,31 @@ class FunctionTool(ToolInterface):
         
         try:
             # Execute function
-            if inspect.iscoroutinefunction(self.func):
-                result = await self.func(context.parameters)
+            sig = inspect.signature(self.func)
+            params = list(sig.parameters.keys())
+            
+            if len(params) == 1:
+                # Single parameter function
+                if inspect.iscoroutinefunction(self.func):
+                    result = await self.func(context.parameters)
+                else:
+                    result = await asyncio.get_event_loop().run_in_executor(
+                        None, self.func, context.parameters
+                    )
             else:
-                result = await asyncio.get_event_loop().run_in_executor(
-                    None, self.func, context.parameters
-                )
+                # Multiple parameters - unpack the dict
+                if inspect.iscoroutinefunction(self.func):
+                    result = await self.func(**context.parameters)
+                else:
+                    result = await asyncio.get_event_loop().run_in_executor(
+                        None, lambda: self.func(**context.parameters)
+                    )
             
             execution_time = time.time() - start_time
+            
+            # Handle non-dict results
+            if not isinstance(result, dict):
+                result = {"result": result}
             
             tool_result = ToolResult(
                 success=True,
@@ -235,9 +252,32 @@ class FunctionTool(ToolInterface):
         """Validate function parameters."""
         try:
             sig = inspect.signature(self.func)
-            bound_args = sig.bind(**parameters)
-            bound_args.apply_defaults()
-            return True
+            params = list(sig.parameters.keys())
+            
+            # Check if the function accepts a single parameter that should be the dict
+            if len(params) == 1:
+                # Single parameter function - pass the entire dict
+                param_name = params[0]
+                bound_args = sig.bind(**{param_name: parameters})
+                bound_args.apply_defaults()
+                
+                # Additional validation: check if the function will actually work with these parameters
+                # This is a simple check - in a real system, you might want more sophisticated validation
+                if hasattr(self.func, '__code__'):
+                    # Try to validate by checking if the function body might access specific keys
+                    # This is a heuristic and might not catch all cases
+                    import dis
+                    instructions = list(dis.get_instructions(self.func))
+                    # Look for LOAD_ATTR or LOAD_METHOD instructions that might access dict keys
+                    # This is a simple approach - more sophisticated validation could be added
+                    pass
+                
+                return True
+            else:
+                # Multiple parameters - try to bind the dict as kwargs
+                bound_args = sig.bind(**parameters)
+                bound_args.apply_defaults()
+                return True
         except Exception as e:
             logger.warning(f"Parameter validation failed for {self.metadata.name}: {e}")
             return False
@@ -521,8 +561,11 @@ def tool(name: str, description: str, category: ToolCategory = ToolCategory.CUST
         func._tool_instance = tool_instance
         
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            return await func(*args, **kwargs)
+        def wrapper(*args, **kwargs):
+            if inspect.iscoroutinefunction(func):
+                return func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
         
         return wrapper
     

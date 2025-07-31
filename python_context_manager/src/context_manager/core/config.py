@@ -36,6 +36,7 @@ class ContextManagerConfig:
     # Tool settings
     tool_timeout: int = 30
     max_concurrent_tools: int = 10
+    max_workers: int = 5
     
     # Performance settings
     enable_caching: bool = True
