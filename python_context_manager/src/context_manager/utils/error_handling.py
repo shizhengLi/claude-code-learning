@@ -198,6 +198,54 @@ class ValidationError(ContextManagerError):
             self.context['field_value'] = str(field_value)
 
 
+class HealthCheckError(ContextManagerError):
+    """Exception raised for health check-related errors."""
+    
+    def __init__(self, message: str, check_name: Optional[str] = None, 
+                 category: Optional[str] = None, **kwargs):
+        """
+        Initialize health check error.
+        
+        Args:
+            message: Error message
+            check_name: Name of the health check that failed
+            category: Category of the health check
+            **kwargs: Additional arguments
+        """
+        super().__init__(message, **kwargs)
+        self.check_name = check_name
+        self.category = category
+        
+        if check_name:
+            self.context['check_name'] = check_name
+        if category:
+            self.context['category'] = category
+
+
+class ConcurrencyError(ContextManagerError):
+    """Exception raised for concurrency-related errors."""
+    
+    def __init__(self, message: str, task_id: Optional[str] = None, 
+                 operation: Optional[str] = None, **kwargs):
+        """
+        Initialize concurrency error.
+        
+        Args:
+            message: Error message
+            task_id: ID of the task that failed
+            operation: Operation that failed
+            **kwargs: Additional arguments
+        """
+        super().__init__(message, **kwargs)
+        self.task_id = task_id
+        self.operation = operation
+        
+        if task_id:
+            self.context['task_id'] = task_id
+        if operation:
+            self.context['operation'] = operation
+
+
 class RateLimitError(ContextManagerError):
     """Exception raised for rate limit-related errors."""
     

@@ -10,7 +10,7 @@ This module provides the main interface for tool management, including:
 
 import asyncio
 import json
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, Callable
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
@@ -200,6 +200,33 @@ class ToolManager:
         """Register a custom tool."""
         return self.registry.register_tool(tool)
     
+    def register_function_tool(self, name: str, func: Callable, 
+                               description: str = "", 
+                               category: ToolCategory = ToolCategory.CUSTOM,
+                               **kwargs) -> bool:
+        """
+        Register a function as a tool (convenience method).
+        
+        Args:
+            name: Tool name
+            func: Function to register as tool
+            description: Tool description
+            category: Tool category
+            **kwargs: Additional tool metadata
+            
+        Returns:
+            True if registration was successful
+        """
+        metadata = ToolMetadata(
+            name=name,
+            description=description or f"Tool: {name}",
+            category=category,
+            **kwargs
+        )
+        
+        tool_instance = FunctionTool(func, metadata)
+        return self.registry.register_tool(tool_instance)
+    
     def unregister_tool(self, tool_name: str) -> bool:
         """Unregister a tool."""
         return self.registry.unregister_tool(tool_name)
@@ -332,6 +359,35 @@ class ToolManager:
             self.active_executions.pop(request.execution_id, None)
         
         return response
+    
+    async def execute_tool_simple(self, tool_name: str, **kwargs) -> ToolResult:
+        """
+        Execute a tool with simple keyword arguments (convenience method).
+        
+        Args:
+            tool_name: Name of the tool to execute
+            **kwargs: Tool parameters
+            
+        Returns:
+            Tool execution result
+        """
+        request = ToolExecutionRequest(
+            tool_name=tool_name,
+            parameters=kwargs
+        )
+        
+        response = await self.execute_tool(request)
+        
+        # Convert response to ToolResult
+        return ToolResult(
+            success=response.success,
+            result=response.result,
+            error=response.error,
+            execution_time=response.execution_time,
+            tool_name=response.tool_name,
+            parameters=kwargs,  # Use the original parameters
+            status=response.status
+        )
     
     async def execute_tools_parallel(self, requests: List[ToolExecutionRequest]) -> List[ToolExecutionResponse]:
         """Execute multiple tools in parallel."""

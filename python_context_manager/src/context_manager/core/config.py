@@ -32,6 +32,7 @@ class ContextManagerConfig:
     long_term_memory_path: str = "data/long_term_memory.json"
     cache_path: str = "data/cache"
     logs_path: str = "logs"
+    storage_path: str = "/tmp/context_manager_storage"
     
     # Tool settings
     tool_timeout: int = 30
@@ -42,6 +43,12 @@ class ContextManagerConfig:
     enable_caching: bool = True
     cache_size: int = 1000
     cache_ttl: int = 3600  # 1 hour
+    
+    # Storage hierarchy settings
+    memory_cache_size: int = 50 * 1024 * 1024  # 50MB
+    memory_cache_items: int = 1000
+    cache_items: int = 5000
+    promotion_threshold: float = 0.7
     
     # Logging settings
     log_level: str = "INFO"
@@ -57,6 +64,10 @@ class ContextManagerConfig:
     enable_compression: bool = True
     enable_prediction: bool = True
     enable_parallel_execution: bool = True
+    
+    # Context management thresholds
+    compression_threshold: float = 0.8
+    pruning_threshold: float = 0.9
     
     def __post_init__(self):
         """Validate configuration after initialization."""
