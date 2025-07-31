@@ -427,21 +427,24 @@ class ErrorHandler:
             response: The error response
         """
         error_type = type(error)
+        called_callbacks = set()
         
         # Call callbacks for this specific error type
         for callback in self.error_callbacks.get(error_type, []):
             try:
                 callback(error, response)
+                called_callbacks.add(callback)
             except Exception as callback_error:
                 self.logger.error(f"Error in error callback: {callback_error}")
         
-        # Call callbacks for base ContextManagerError
-        if isinstance(error, ContextManagerError):
+        # Call callbacks for base ContextManagerError (if not already called)
+        if isinstance(error, ContextManagerError) and error_type != ContextManagerError:
             for callback in self.error_callbacks.get(ContextManagerError, []):
-                try:
-                    callback(error, response)
-                except Exception as callback_error:
-                    self.logger.error(f"Error in error callback: {callback_error}")
+                if callback not in called_callbacks:
+                    try:
+                        callback(error, response)
+                    except Exception as callback_error:
+                        self.logger.error(f"Error in error callback: {callback_error}")
     
     def get_error_stats(self) -> Dict[str, Any]:
         """

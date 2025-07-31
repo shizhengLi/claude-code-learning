@@ -14,6 +14,8 @@ from typing import Any, Callable, Dict, Optional, TypeVar, Union
 from pathlib import Path
 import asyncio
 import json
+import platform
+import psutil
 
 
 # Type variables for generic functions
@@ -186,15 +188,17 @@ def retry(
                     if attempt == max_attempts - 1:
                         # Last attempt failed
                         if logger:
+                            func_name = getattr(func, '__name__', 'unknown_function')
                             logger.error(
-                                f"Function {func.__name__} failed after {max_attempts} attempts. "
+                                f"Function {func_name} failed after {max_attempts} attempts. "
                                 f"Last error: {e}"
                             )
                         raise e
                     
                     if logger:
+                        func_name = getattr(func, '__name__', 'unknown_function')
                         logger.warning(
-                            f"Function {func.__name__} failed on attempt {attempt + 1}/{max_attempts}. "
+                            f"Function {func_name} failed on attempt {attempt + 1}/{max_attempts}. "
                             f"Retrying in {current_delay:.2f}s. Error: {e}"
                         )
                     
@@ -244,15 +248,17 @@ def async_retry(
                     if attempt == max_attempts - 1:
                         # Last attempt failed
                         if logger:
+                            func_name = getattr(func, '__name__', 'unknown_async_function')
                             logger.error(
-                                f"Async function {func.__name__} failed after {max_attempts} attempts. "
+                                f"Async function {func_name} failed after {max_attempts} attempts. "
                                 f"Last error: {e}"
                             )
                         raise e
                     
                     if logger:
+                        func_name = getattr(func, '__name__', 'unknown_async_function')
                         logger.warning(
-                            f"Async function {func.__name__} failed on attempt {attempt + 1}/{max_attempts}. "
+                            f"Async function {func_name} failed on attempt {attempt + 1}/{max_attempts}. "
                             f"Retrying in {current_delay:.2f}s. Error: {e}"
                         )
                     
@@ -296,7 +302,7 @@ def safe_json_dumps(obj: Any, indent: Optional[int] = None) -> str:
         JSON string or empty string on failure
     """
     try:
-        return json.dumps(obj, indent=indent, ensure_ascii=False, default=str)
+        return json.dumps(obj, indent=indent, ensure_ascii=False)
     except (TypeError, ValueError):
         return ""
 
@@ -446,7 +452,14 @@ def validate_path(path: Union[str, Path], must_exist: bool = True, create_dirs: 
         raise ValueError(f"Path does not exist: {path_obj}")
     
     if create_dirs and not path_obj.exists():
-        path_obj.mkdir(parents=True, exist_ok=True)
+        # If path has a file extension, create parent directory
+        # If path doesn't have an extension, create it as a directory
+        if path_obj.suffix:
+            # Has file extension, create parent directory
+            path_obj.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            # No file extension, create as directory
+            path_obj.mkdir(parents=True, exist_ok=True)
     
     return path_obj
 
@@ -458,8 +471,6 @@ def get_system_info() -> Dict[str, Any]:
     Returns:
         Dictionary containing system information
     """
-    import psutil
-    import platform
     
     return {
         'platform': platform.platform(),

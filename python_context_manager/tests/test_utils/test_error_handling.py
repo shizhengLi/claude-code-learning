@@ -233,7 +233,7 @@ class TestErrorHandlingFunctions:
         
         assert response['success'] is False
         assert response['error']['type'] == 'ContextManagerError'
-        assert response['error']['message'] == 'Test error'
+        assert response['error']['message'] == '[TEST_001] Test error (Context: {\'operation\': \'test\'})'
         assert response['error']['code'] == 'TEST_001'
         assert response['error']['context'] == {'operation': 'test'}
     
@@ -283,7 +283,7 @@ class TestErrorHandler:
             response = handler.handle_error(error)
             
             assert response['success'] is False
-            assert response['error']['message'] == 'Test error'
+            assert response['error']['message'] == '[TEST_001] Test error'
             assert handler.error_counts['ContextManagerError'] == 1
             mock_logger.error.assert_called_once()
     

@@ -188,8 +188,9 @@ class TestConfigManager:
     
     def test_create_directories(self):
         """Test directory creation."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_path = Path(temp_dir) / "test_config.json"
+        with tempfile.TemporaryDirectory() as temp_dir_str:
+            temp_dir = Path(temp_dir_str)
+            config_path = temp_dir / "test_config.json"
             config_manager = ConfigManager(config_path)
             
             # Set paths to be within temp directory
@@ -206,6 +207,8 @@ class TestConfigManager:
             # Check directories were created
             assert (temp_dir / "cache").exists()
             assert (temp_dir / "logs").exists()
+            # Also check that parent directories of memory files were created
+            assert (temp_dir).exists()  # Parent directory already exists
     
     def test_get_specific_configs(self):
         """Test getting specific configuration sections."""
